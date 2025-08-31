@@ -3,6 +3,7 @@ class Document {
   final String title;
   final int year;
   final String rack;
+  final String ambalan;
   final String box;
   final String filePath; // local path to PDF
   // final String? fileName; // Nama file PDF
@@ -13,6 +14,7 @@ class Document {
     required this.title,
     required this.year,
     required this.rack,
+    required this.ambalan,
     required this.box,
     required this.filePath,
     // this.fileName,
@@ -24,6 +26,7 @@ class Document {
     'title': title,
     'year': year,
     'rack': rack,
+    'ambalan': ambalan,
     'box': box,
     'file_path': filePath,
     // 'file_name': fileName,
@@ -35,6 +38,7 @@ class Document {
     title: row['title'] as String,
     year: (row['year'] as num).toInt(),
     rack: row['rack'] as String,
+    ambalan: row['ambalan'] as String,
     box: row['box'] as String,
     filePath: row['file_path'] as String,
     // fileName: row['file_name'] as String?,

@@ -14,7 +14,7 @@ class CustomerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _seedIfEmpty();
+    // _seedIfEmpty();
     refreshList();
   }
 
@@ -53,15 +53,15 @@ class CustomerController extends GetxController {
 
     final result = await Get.dialog<bool>(
       AlertDialog(
-        title: Text(isEditMode ? 'Edit Status Nasabah' : 'Tambah Nasabah'),
+        title: Text(isEditMode ? 'Edit Status User' : 'Tambah User'),
         content: SizedBox(
           width: 500,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // TAMPILKAN DATA NASABAH (READ-ONLY) JIKA EDIT MODE
+              // TAMPILKAN DATA User (READ-ONLY) JIKA EDIT MODE
               if (isEditMode) ...[
-                _buildReadOnlyField('Nama', initial!.name),
+                _buildReadOnlyField('Nama', initial.name),
                 const SizedBox(height: 12),
                 _buildReadOnlyField('NIK', initial.nik),
                 const SizedBox(height: 12),
@@ -76,7 +76,7 @@ class CustomerController extends GetxController {
                 const SizedBox(height: 8),
               ],
 
-              // FIELD INPUT UNTUK TAMBAH NASABAH (HANYA MUNCUL JIKA BUKAN EDIT MODE)
+              // FIELD INPUT UNTUK TAMBAH User (HANYA MUNCUL JIKA BUKAN EDIT MODE)
               if (!isEditMode) ...[
                 TextField(
                   controller: nameCtrl,
@@ -148,7 +148,7 @@ class CustomerController extends GetxController {
           ),
           FilledButton(
             onPressed: () {
-              // Validasi input hanya untuk tambah nasabah
+              // Validasi input hanya untuk tambah User
               if (!isEditMode) {
                 if (nameCtrl.text.isEmpty) {
                   Get.snackbar(
@@ -190,16 +190,16 @@ class CustomerController extends GetxController {
         final customer = Customer(
           id: initial?.id,
           name: isEditMode
-              ? initial!.name
+              ? initial.name
               : nameCtrl.text, // Gunakan nilai lama jika edit
           nik: isEditMode
-              ? initial!.nik
+              ? initial.nik
               : nikCtrl.text, // Gunakan nilai lama jika edit
           address: isEditMode
-              ? initial!.address
+              ? initial.address
               : addressCtrl.text, // Gunakan nilai lama jika edit
           phone: isEditMode
-              ? initial!.phone
+              ? initial.phone
               : (phoneCtrl.text.isNotEmpty
                     ? phoneCtrl.text
                     : null), // Gunakan nilai lama jika edit
@@ -216,7 +216,7 @@ class CustomerController extends GetxController {
 
         Get.snackbar(
           'Berhasil',
-          'Nasabah ${!isEditMode ? 'ditambahkan' : 'diperbarui'}',
+          'User ${!isEditMode ? 'ditambahkan' : 'diperbarui'}',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green.shade100,
         );
@@ -284,7 +284,7 @@ Future<void> addOrEdit({Customer? initial}) async {
 
   final result = await Get.dialog<bool>(
     AlertDialog(
-      title: Text(isEditMode ? 'Edit Nasabah' : 'Tambah Nasabah'),
+      title: Text(isEditMode ? 'Edit User' : 'Tambah User'),
       content: SizedBox(
         width: 500,
         child: Column(
@@ -420,7 +420,7 @@ Future<void> addOrEdit({Customer? initial}) async {
 
       Get.snackbar(
         'Berhasil',
-        'Nasabah ${!isEditMode ? 'ditambahkan' : 'diperbarui'}',
+        'User ${!isEditMode ? 'ditambahkan' : 'diperbarui'}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.shade100,
       );
@@ -443,39 +443,39 @@ Future<void> addOrEdit({Customer? initial}) async {
     await refreshList();
   }
 
-  Future<void> _seedIfEmpty() async {
-    final hasAny = (await db.listCustomers()).isNotEmpty;
-    if (hasAny) return;
+  // Future<void> _seedIfEmpty() async {
+  //   final hasAny = (await db.listCustomers()).isNotEmpty;
+  //   if (hasAny) return;
 
-    // Data sample nasabah
-    final sampleCustomers = [
-      Customer(
-        name: 'Ahmad Santoso',
-        nik: '1234567890123456',
-        address: 'Jl. Merdeka No. 123, Jakarta',
-        phone: '081234567890',
-        status: 'active',
-        // createdAt: DateTime.now().millisecondsSinceEpoch,
-      ),
-      Customer(
-        name: 'Siti Rahayu',
-        nik: '2345678901234567',
-        address: 'Jl. Sudirman No. 45, Bandung',
-        phone: '082345678901',
-        status: 'active',
-        // createdAt: DateTime.now().millisecondsSinceEpoch,
-      ),
-      Customer(
-        name: 'Budi Pratama',
-        nik: '3456789012345678',
-        address: 'Jl. Gatot Subroto No. 67, Surabaya',
-        status: 'inactive',
-        // createdAt: DateTime.now().millisecondsSinceEpoch,
-      ),
-    ];
+  //   // Data sample User
+  //   final sampleCustomers = [
+  //     Customer(
+  //       name: 'Ahmad Santoso',
+  //       nik: '1234567890123456',
+  //       address: 'Jl. Merdeka No. 123, Jakarta',
+  //       phone: '081234567890',
+  //       status: 'active',
+  //       // createdAt: DateTime.now().millisecondsSinceEpoch,
+  //     ),
+  //     Customer(
+  //       name: 'Siti Rahayu',
+  //       nik: '2345678901234567',
+  //       address: 'Jl. Sudirman No. 45, Bandung',
+  //       phone: '082345678901',
+  //       status: 'active',
+  //       // createdAt: DateTime.now().millisecondsSinceEpoch,
+  //     ),
+  //     Customer(
+  //       name: 'Budi Pratama',
+  //       nik: '3456789012345678',
+  //       address: 'Jl. Gatot Subroto No. 67, Surabaya',
+  //       status: 'inactive',
+  //       // createdAt: DateTime.now().millisecondsSinceEpoch,
+  //     ),
+  //   ];
 
-    for (final customer in sampleCustomers) {
-      await db.insertCustomer(customer);
-    }
-  }
+  //   for (final customer in sampleCustomers) {
+  //     await db.insertCustomer(customer);
+  //   }
+  // }
 }

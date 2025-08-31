@@ -43,7 +43,7 @@ class DashboardView extends GetView<DashboardController> {
                       const SizedBox(width: 8),
                       if (isWide)
                         const Text(
-                          'KoperasiFy',
+                          'F A G',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                     ],
@@ -62,7 +62,7 @@ class DashboardView extends GetView<DashboardController> {
                 Obx(
                   () => SideItem(
                     icon: Icons.people_alt_rounded,
-                    label: 'Data Nasabah',
+                    label: 'Data User',
                     selected: controller.currentPage.value == Routes.COSTOMER,
                     onTap: () => controller.changePage(Routes.COSTOMER),
                     extended: isWide,
@@ -119,7 +119,7 @@ class DashboardView extends GetView<DashboardController> {
                             String title =
                                 controller.currentPage.value == Routes.DOCUMENT
                                 ? "Pencarian Dokumen"
-                                : "Data Nasabah";
+                                : "Data User";
                             return Text(
                               title,
                               style: const TextStyle(

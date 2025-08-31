@@ -1,13 +1,15 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:new_koperasi_apps/app/data/database/app_database.dart';
-import 'package:new_koperasi_apps/app/model/document.dart';
 import 'package:new_koperasi_apps/app/utils/app_paths.dart';
 import 'package:new_koperasi_apps/app/utils/generate_placeholder_pdf.dart';
 import 'package:new_koperasi_apps/app/utils/sanitize_file_name.dart';
 import 'package:path/path.dart' as p;
+
+import '../../../model/document.dart';
 
 class DocumentController extends GetxController {
   final db = Get.find<AppDatabase>();
@@ -15,10 +17,17 @@ class DocumentController extends GetxController {
   final isLoading = false.obs;
   final results = <Document>[].obs;
   final searchBy = 'year'.obs;
+  final formKey = GlobalKey<FormState>();
+  var placeholderCreated = false.obs;
+  // File? selectedFile;
+  var selectedFile = Rxn<File>();
+
+  // String? filePath;
+
   @override
   void onInit() {
     super.onInit();
-    _seedIfEmpty();
+    // _seedIfEmpty();
     doSearch('');
   }
 
@@ -40,162 +49,220 @@ class DocumentController extends GetxController {
     }
 
     final String filePath = file.path;
-    final String fileName = file.name;
+    // final String fileName = file.name;
 
     // Langsung buka dialog form dengan file yang sudah dipilih
     final title = TextEditingController();
     final year = TextEditingController(text: DateTime.now().year.toString());
     final rack = TextEditingController();
+    final ambalan = TextEditingController();
     final box = TextEditingController();
+    selectedFile.value = File(file.path);
 
     bool? result = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Upload Dokumen PDF'),
-        content: SizedBox(
-          width: 500,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: title,
-                decoration: const InputDecoration(
-                  labelText: 'Judul *',
-                  hintText: 'Masukkan judul dokumen',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: year,
-                decoration: const InputDecoration(
-                  labelText: 'Tahun *',
-                  hintText: 'Tahun dokumen',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: rack,
-                      decoration: const InputDecoration(
-                        labelText: 'Nomor Rak *',
-                        hintText: 'Nomor rak penyimpanan',
-                        border: OutlineInputBorder(),
-                      ),
+        title: const Text("Tambah Dokumen"),
+        content: Form(
+          key: formKey,
+          child: SizedBox(
+            width: 500,
+
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                SizedBox(height: 16),
+
+                // Judul
+                TextFormField(
+                  controller: title,
+                  decoration: const InputDecoration(
+                    hintText: "Judul",
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: box,
-                      decoration: const InputDecoration(
-                        labelText: 'Nomor Box *',
-                        hintText: 'Nomor box penyimpanan',
-                        border: OutlineInputBorder(),
-                      ),
+                  validator: (value) => value == null || value.isEmpty
+                      ? "Judul wajib diisi"
+                      : null,
+                ),
+                SizedBox(height: 16),
+
+                // Tahun
+                TextFormField(
+                  controller: year,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: "Tahun",
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 16,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty)
+                      return "Tahun wajib diisi";
+                    if (int.tryParse(value) == null) return "Tahun harus angka";
+                    return null;
+                  },
                 ),
-                child: Row(
+                SizedBox(height: 16),
+                const SizedBox(width: 10),
+                // Rak
+                Row(
                   children: [
-                    const Icon(
-                      Icons.insert_drive_file,
-                      size: 24,
-                      color: Colors.blue,
-                    ),
-                    const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        fileName,
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey[700],
+                      child: TextFormField(
+                        controller: rack,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: "Blok",
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Nomor Blok wajib diisi"
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: TextFormField(
+                        controller: ambalan,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: "Ambalan",
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Ambalan wajib diisi"
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: TextFormField(
+                        controller: box,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: "Box",
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Box wajib diisi"
+                            : null,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '* wajib diisi',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+                const SizedBox(height: 16),
+
+                // File PDF
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.all(15),
+                        height: 50,
+                        width: double.maxFinite,
+                        decoration: BoxDecoration(
+                          color: Colors.greenAccent,
+                          border: Border.all(width: 1, color: Colors.black),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Obx(() {
+                          final file = selectedFile.value;
+                          return Text(
+                            file?.path.split(Platform.pathSeparator).last ??
+                                "Belum ada file dipilih",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        }),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.attach_file),
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ["pdf"],
+                        );
+                        if (result != null) {
+                          selectedFile.value = File(result.files.single.path!);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Batal'),
+            onPressed: () {
+              // batal -> langsung close
+              Get.back();
+            },
+            child: const Text("Batal"),
           ),
           FilledButton(
-            onPressed: () {
-              // Validasi input sebelum menutup dialog
-              if (title.text.isEmpty) {
-                Get.snackbar(
-                  'Gagal',
-                  'Judul dokumen harus diisi.',
-                  colorText: const Color.fromARGB(255, 66, 6, 2),
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.transparent,
-                );
-                return;
-              }
+            onPressed: () async {
+              if (formKey.currentState?.validate() ?? false) {
+                if (selectedFile.value == null) {
+                  Get.snackbar(
+                    "Error",
+                    "Pilih file PDF terlebih dahulu",
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                  return;
+                }
 
-              if (year.text.isEmpty || int.tryParse(year.text) == null) {
-                Get.snackbar(
-                  'Gagal',
-                  'Tahun harus berupa angka yang valid.',
-                  colorText: const Color.fromARGB(255, 66, 6, 2),
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.transparent,
+                final d = DocumentsCompanion.insert(
+                  title: title.text,
+                  year: int.parse(year.text),
+                  rack: rack.text,
+                  ambalan: ambalan.text,
+                  box: box.text,
+                  filePath: selectedFile.value!.path,
                 );
-                return;
-              }
 
-              if (rack.text.isEmpty) {
+                await db.into(db.documents).insert(d);
+
+                // refresh list
+                await doSearch("");
+
+                // close dialog setelah berhasil
+                Get.back();
+
                 Get.snackbar(
-                  'Gagal',
-                  'Nomor rak harus diisi.',
-                  colorText: const Color.fromARGB(255, 66, 6, 2),
+                  "Sukses",
+                  "Dokumen berhasil disimpan",
                   snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.transparent,
                 );
-                return;
               }
-
-              if (box.text.isEmpty) {
-                Get.snackbar(
-                  'Gagal',
-                  'Nomor box harus diisi.',
-                  colorText: const Color.fromARGB(255, 66, 6, 2),
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.transparent,
-                );
-                return;
-              }
-
-              // Jika semua valid, tutup dialog dengan result true
-              Get.back(result: true);
             },
-            child: const Text('Simpan Dokumen'),
+            child: const Text("Simpan"),
           ),
         ],
       ),
-      barrierDismissible: false,
+      barrierDismissible: false, // biar ga bisa tutup dengan klik luar
     );
 
     // Jika user klik Simpan Dokumen (result = true)
@@ -220,20 +287,17 @@ class DocumentController extends GetxController {
           title: title.text,
           year: int.parse(year.text),
           rack: rack.text,
+          ambalan: ambalan.text,
           box: box.text,
           filePath: newPath,
         );
 
         await db.insertDocument(d);
+        // refresh list
         await doSearch(searchCtrl.text);
 
-        Get.snackbar(
-          'Berhasil',
-          'Dokumen "${title.text}" berhasil diupload',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.transparent,
-          duration: const Duration(seconds: 2),
-        );
+        // 🚀 ini yang bikin dialog close
+        Get.back();
       } catch (e) {
         Get.snackbar(
           'Gagal',
@@ -248,15 +312,22 @@ class DocumentController extends GetxController {
     }
   }
 
-  Future<void> doSearch(String q) async {
+  Future<void> doSearch(String query) async {
     isLoading.value = true;
 
-    if (searchBy.value == 'year') {
-      // Pencarian berdasarkan tahun
-      results.assignAll(await db.searchDocumentsByYear(q));
+    if (query.isEmpty) {
+      results.value = await db.getAllDocuments();
     } else {
-      // Pencarian berdasarkan judul (default)
-      results.assignAll(await db.searchDocumentsByTitle(q));
+      if (searchBy.value == 'title') {
+        results.value = await db.searchDocumentsByTitle(query);
+      } else {
+        final year = int.tryParse(query);
+        if (year != null) {
+          results.value = await db.searchDocumentsByYear("$year");
+        } else {
+          results.clear();
+        }
+      }
     }
 
     isLoading.value = false;
@@ -283,8 +354,11 @@ class DocumentController extends GetxController {
     final title = TextEditingController();
     final year = TextEditingController(text: DateTime.now().year.toString());
     final rack = TextEditingController();
+    final ambalan = TextEditingController();
     final box = TextEditingController();
     String? filePath;
+    placeholderCreated.value = false;
+    filePath = null;
 
     await Get.dialog(
       AlertDialog(
@@ -298,7 +372,7 @@ class DocumentController extends GetxController {
               TextField(
                 controller: title,
                 decoration: const InputDecoration(
-                  labelText: 'Judul Dokumen *',
+                  hintText: 'Judul Dokumen *',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -312,7 +386,7 @@ class DocumentController extends GetxController {
               TextField(
                 controller: year,
                 decoration: const InputDecoration(
-                  labelText: 'Tahun *',
+                  hintText: 'Tahun *',
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 12,
@@ -330,7 +404,21 @@ class DocumentController extends GetxController {
                     child: TextField(
                       controller: rack,
                       decoration: const InputDecoration(
-                        labelText: 'Nomor Rak *',
+                        hintText: 'Nomor Blok *',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: ambalan,
+                      decoration: const InputDecoration(
+                        hintText: 'Nomor Ambalan *',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -344,7 +432,7 @@ class DocumentController extends GetxController {
                     child: TextField(
                       controller: box,
                       decoration: const InputDecoration(
-                        labelText: 'Nomor Box *',
+                        hintText: 'Nomor Box *',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
@@ -364,7 +452,7 @@ class DocumentController extends GetxController {
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Colors.white),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,55 +466,69 @@ class DocumentController extends GetxController {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (filePath == null)
-                      const Text(
-                        'Belum ada file PDF',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      )
-                    else
-                      Text(
-                        'File siap: ${p.basename(filePath!)}',
-                        style: const TextStyle(color: Colors.green),
-                      ),
-                    const SizedBox(height: 12),
-                    FilledButton.tonal(
-                      onPressed: () async {
-                        // Validasi judul sebelum membuat PDF
-                        if (title.text.isEmpty) {
-                          Get.snackbar(
-                            'Perhatian',
-                            'Silakan isi judul dokumen terlebih dahulu',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.transparent,
-                          );
-                          return;
-                        }
 
-                        // generate placeholder PDF and store in app dir
-                        final bytes = await GeneratePlaceholderPdf(
-                          title.text.isEmpty ? 'Dokumen Baru' : title.text,
-                          int.tryParse(year.text) ?? DateTime.now().year,
-                        );
-                        final pdfDir = await AppPaths.ensureSubdir('pdf');
-                        final fname =
-                            'doc_${DateTime.now().millisecondsSinceEpoch}.pdf';
-                        final path = p.join(pdfDir, fname);
-                        await File(path).writeAsBytes(bytes, flush: true);
-                        filePath = path;
-
-                        Get.snackbar(
-                          'Berhasil',
-                          'PDF placeholder berhasil dibuat',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.transparent,
-                        );
-                      },
-                      // icon: const Icon(Icons.picture_as_pdf),
-                      child: const Text('Buat PDF Placeholder'),
+                    Obx(
+                      () => placeholderCreated.value
+                          ? Text(
+                              'PDF Placeholder sudah dibuat',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.green.shade700,
+                              ),
+                            )
+                          : const Text(
+                              'Belum ada file PDF',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                              ),
+                            ),
                     ),
+
+                    const SizedBox(height: 12),
+
+                    Obx(
+                      () => FilledButton(
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(
+                            placeholderCreated.value
+                                ? Colors.green
+                                : Colors.grey, // warna berubah
+                          ),
+                        ),
+                        onPressed: () async {
+                          if (title.text.isEmpty) {
+                            Get.snackbar(
+                              'Perhatian',
+                              'Silakan isi judul dokumen terlebih dahulu',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.transparent,
+                            );
+                            return;
+                          }
+
+                          // generate placeholder PDF
+                          final bytes = await GeneratePlaceholderPdf(
+                            title.text,
+                            int.tryParse(year.text) ?? DateTime.now().year,
+                          );
+                          final pdfDir = await AppPaths.ensureSubdir('pdf');
+                          final fname =
+                              'doc_${DateTime.now().millisecondsSinceEpoch}.pdf';
+                          final path = p.join(pdfDir, fname);
+                          await File(path).writeAsBytes(bytes, flush: true);
+
+                          filePath = path;
+                          placeholderCreated.value = true; // ✅ ubah state
+                        },
+                        child: Text(
+                          placeholderCreated.value
+                              ? 'Placeholder Berhasil Dibuat'
+                              : 'Buat PDF Placeholder',
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 8),
                     const Text(
                       '* PDF placeholder akan dibuat otomatis dengan judul dan tahun yang diisi',
@@ -499,6 +601,17 @@ class DocumentController extends GetxController {
                 return;
               }
 
+              if (ambalan.text.isEmpty) {
+                Get.snackbar(
+                  'Gagal',
+                  'Nomor ambalan harus diisi',
+                  colorText: const Color.fromARGB(255, 66, 6, 2),
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.transparent,
+                );
+                return;
+              }
+
               if (box.text.isEmpty) {
                 Get.snackbar(
                   'Gagal',
@@ -525,6 +638,7 @@ class DocumentController extends GetxController {
                 title: title.text,
                 year: int.tryParse(year.text) ?? DateTime.now().year,
                 rack: rack.text,
+                ambalan: ambalan.text,
                 box: box.text,
                 filePath: filePath!,
               );
@@ -604,23 +718,22 @@ class DocumentController extends GetxController {
     );
   }
 
-  Future<void> _seedIfEmpty() async {
-    final hasAny = (await db.searchDocuments('')).isNotEmpty;
-    if (hasAny) return;
-    final pdfDir = await AppPaths.ensureSubdir('pdf');
-    for (final year in [2023, 2024, 2025]) {
-      final bytes = await GeneratePlaceholderPdf('Laporan Tahunan', year);
-      final path = p.join(pdfDir, 'laporan_$year.pdf');
-      await File(path).writeAsBytes(bytes);
-      await db.insertDocument(
-        Document(
-          title: 'Laporan Tahunan',
-          year: year,
-          rack: 'R-$year',
-          box: 'B-${year % 10}',
-          filePath: path,
-        ),
-      );
-    }
-  }
+  // Future<void> _seedIfEmpty() async {
+  //   final hasAny = (await db.searchDocuments('')).isNotEmpty;
+  //   if (hasAny) return;
+  //   final pdfDir = await AppPaths.ensureSubdir('pdf');
+  // for (final year in [2023, 2024, 2025]) {
+  //   final bytes = await GeneratePlaceholderPdf('Laporan Tahunan', year);
+  //   final path = p.join(pdfDir, 'laporan_$year.pdf');
+  //   await File(path).writeAsBytes(bytes);
+  //   await db.insertDocument(
+  //     Document(
+  //       title: 'Laporan Tahunan',
+  //       year: year,
+  //       rack: 'R-$year',
+  //       box: 'B-${year % 10}',
+  //       filePath: path,
+  //     ),
+  //   );
+  // }
 }

@@ -179,7 +179,7 @@ class DashboardController extends GetxController {
           FilledButton.tonalIcon(
             onPressed: () => customerC.addOrEdit(),
             icon: const Icon(Icons.person_add_alt_1),
-            label: const Text('Tambah Nasabah'),
+            label: const Text('Tambah UserS'),
           ),
         ],
       ),
